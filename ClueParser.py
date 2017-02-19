@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# CS124 Homework 5 Jeopardy
-# Original written in Java by Sam Bowman (sbowman@stanford.edu)
-# Ported to Python by Milind Ganjoo (mganjoo@stanford.edu)
 
 import itertools as it
 from NaiveBayes import NaiveBayes
@@ -53,12 +50,6 @@ class ClueParser:
         words = []
         start = 0
         i = 0
-        # clue = clue.replace("<PERSON>", "")
-        # clue = clue.replace("<LOCATION>", "")
-        # clue = clue.replace("<ORGANIZATION>", "")
-        # clue = clue.replace("</PERSON>", "")
-        # clue = clue.replace("</LOCATION>", "")
-        # clue = clue.replace("</ORGANIZATION>", "")
         matches = re.findall(capital_remover, clue)
         sent = []
         for match in matches:

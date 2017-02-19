@@ -1,10 +1,5 @@
 #!/usr/bin/env python
-# CS124 Homework 5 Jeopardy
-# Original written in Java by Sam Bowman (sbowman@stanford.edu)
-# Ported to Python by Milind Ganjoo (mganjoo@stanford.edu)
-
-# This is a Naive Bayes implementation you can use.
-# There's nothing for you to implement here, hooray!
+# This is a Naive Bayes implementation.
 
 import math
 import itertools as it
@@ -103,20 +98,20 @@ class NaiveBayes:
 
         # Report overall score.
         print "Average score: {0}".format(aggregate_score / 10)
-    
+
     def scoreData(self, features_list, labels):
         correct = 0
         for features, label in it.izip(features_list, labels):
             if self.classify(features) == label:
                 correct += 1
         return float(correct) / len(labels)
-    
+
     def addExample(self, klass, features):
         self.class_set.add(klass)
         if klass not in self.stats:
             self.stats[klass] = self.ClassStats()
         class_stat = self.stats[klass]
-        
+
         class_stat.num_examples += 1
         for feature in features:
             self.feature_set.add(feature)

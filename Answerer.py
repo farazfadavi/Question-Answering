@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# CS124 Homework 5 Jeopardy
-# Original written in Java by Sam Bowman (sbowman@stanford.edu)
-# Ported to Python by Milind Ganjoo (mganjoo@stanford.edu)
 
 from ClueParser import ClueParser
 import itertools as it
@@ -10,48 +7,27 @@ import sys
 
 
 name_finder = '<[^>|L]+>([^<]+)<\/[^>]+>'
-good = 'born(\sin)?(\s[A-Za-z]+\s[0-9]+,?)?\s([0-9]+)', 3
-bad = '<\/PERSON>,?(\swas)?\sborn\s?(the\s|following\s|year\s)*\s?(in|on)?\s?[A-Za-z]+\s[0-9]+,?\s([0-9]+)', 4
-
 class Answerer:
 
     def answer(self, parsed_clues):
         """Answer each clue and return a list of answers."""
         answers = []
         wiki_filename = "data/wiki-text-ner.txt"
-
-        # TODO: Process the wiki file and fill in the answers list.
-        # Add 'No answer.' as the answer when you don't find an answer you are confident of.
-        # We recommend using Hearst style patterns to find answers within the
-        # Wiki text.
         for parsed_clue in parsed_clues:
             clue_type, clue_entity = parsed_clue.split(":")
-            # if clue_type == "born_in":
-            # print clue_type + ": " + clue_entity
             if clue_type == "born_in":
                 match, i = self.searchForPatterns(["born_in" + clue_entity, '<LOCATION>(Manhattan|Moscow)<\/LOCATION>', '<LOCATION>([^<]+)<\/LOCATION>, <LOCATION>([^<]+)<\/LOCATION>'], [0, 0], wiki_filename)
                 if match is None or i == 0 or 'str' not in str(type(match)):
-                    # print "No answer.\n"
                     answers.append("No answer.")
                 else:
-                    # print "What is " + match + "?\n\n\n"
                     answers.append("What is " + match + "?")
             else:
                 match, i = self.searchForPatterns([clue_entity, 'born [\w+\s]+,\s([0-9]{4})', '(,|\))\s\(?([0-9]{4})', clue_entity + '<\/PERSON>\s\([A-Za-z]+\s[0-9]+,?\s([0-9]+)', 'born(\sin)?(\s[A-Za-z]+\s[0-9]+,?)?\s([0-9]+)'], [1, 2, 1, 3], wiki_filename)
                 if match is None or i == 0 or 'str' not in str(type(match)):
-                    # print "No answer.\n"
                     answers.append("No answer.")
                 else:
-                    # print "What is " + match + "?\n\n\n"
                     answers.append("What is " + match + "?")
-            # exit()
         return answers
-
-    # TODO: you may want to declare functions like these to structure
-    # your code, but feel free to remove this function if you don't need it.
-    def answerBornIn(self, clue_entity):
-        """Answers questions of the type born_in:[clue_entity]."""
-        return "What is Stanford, California?"
 
     def find_str(self, s, char):
         index = 0
@@ -154,8 +130,6 @@ class Answerer:
             return returnVal, index
         else:
             return None
-
-#### You should not need to change anything after this point. ####
 
     def evaluate(self, guessed_answers, guessed_answers_from_parses, gold_answers):
         """Shows you how your model will score on the training/development data."""
