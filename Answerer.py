@@ -26,23 +26,23 @@ class Answerer:
         # Wiki text.
         for parsed_clue in parsed_clues:
             clue_type, clue_entity = parsed_clue.split(":")
-            # if clue_type != "born_in":
-            print clue_type + ": " + clue_entity
+            # if clue_type == "born_in":
+            # print clue_type + ": " + clue_entity
             if clue_type == "born_in":
-                match, i = self.searchForPatterns([clue_entity, ''], [0], wiki_filename)
-                if match is None or i == 0:
-                    print "No answer.\n"
+                match, i = self.searchForPatterns(["born_in" + clue_entity, '<LOCATION>(Manhattan|Moscow)<\/LOCATION>', '<LOCATION>([^<]+)<\/LOCATION>, <LOCATION>([^<]+)<\/LOCATION>'], [0, 0], wiki_filename)
+                if match is None or i == 0 or 'str' not in str(type(match)):
+                    # print "No answer.\n"
                     answers.append("No answer.")
                 else:
-                    print "What is " + match + "?\n\n\n"
+                    # print "What is " + match + "?\n\n\n"
                     answers.append("What is " + match + "?")
             else:
                 match, i = self.searchForPatterns([clue_entity, 'born [\w+\s]+,\s([0-9]{4})', '(,|\))\s\(?([0-9]{4})', clue_entity + '<\/PERSON>\s\([A-Za-z]+\s[0-9]+,?\s([0-9]+)', 'born(\sin)?(\s[A-Za-z]+\s[0-9]+,?)?\s([0-9]+)'], [1, 2, 1, 3], wiki_filename)
-                if match is None or i == 0:
-                    print "No answer.\n"
+                if match is None or i == 0 or 'str' not in str(type(match)):
+                    # print "No answer.\n"
                     answers.append("No answer.")
                 else:
-                    print "What is " + match + "?\n\n\n"
+                    # print "What is " + match + "?\n\n\n"
                     answers.append("What is " + match + "?")
             # exit()
         return answers
@@ -64,10 +64,6 @@ class Answerer:
                 index += 1
         return -1
 
-    # TODO: This method is merely a piece of starter code that we think you will find useful. If you use it,
-    # you may want to modify it to make it more useful. You may modify it however you like, and you may also
-    # change the return type or the argument list, since we won't call this
-    # function directly during grading.
     def searchForPatterns(self, pattern_strings, pattern_positions, filename):
         """Searches a text file using several regular expressions at the same time, and returns one match. If more than
             one regular expression matches a piece of the file, the order of the regular expressions in the list
@@ -94,6 +90,10 @@ class Answerer:
             filename should be the filename for the text file being searched."""
         patterns = []
         clue_entity = pattern_strings[0]
+        born = False
+        if "born_in" in clue_entity:
+            clue_entity = clue_entity.replace('born_in', '')
+            born = True
         del pattern_strings[0]
         for pattern_string in pattern_strings:
             patterns.append(re.compile(pattern_string, re.IGNORECASE))
@@ -109,26 +109,33 @@ class Answerer:
                 count = 0
                 title = re.findall(name_finder, line)
                 if " ".join(title) == clue_entity:
-                    print "FOUND"
                     found = True
                     count += 10# increases confidence in result
             if clue_entity in line:
-                print "FOUND in LINE"
                 foundInLine = 1
             stop = False
             for i, p in enumerate(patterns):
                 m = re.findall(p, line)
                 if len(m) != 0:
                     for match in m:
-                        if i != 0:
+                        query = match
+                        if i != 0 and not born:
                             for each in match:
                                 if len(each) == 4:
                                     match = each
+                                    query = match
+                        if born:
+                            if len(match) == 2:
+                                query = "<LOCATION>" + match[0]
+                                match = match[0] + ", " + match[1]
+                            else:
+                                query = "<LOCATION>" + match
                         if self.find_str(line, clue_entity) != -1:
-                            if self.find_str(line, match) > self.find_str(line, clue_entity):
+                            if self.find_str(line, query) > self.find_str(line, clue_entity):
                                 count += foundInLine
+                                if ("where" in line and "born" in line) or "was born in" in line:
+                                    count += 2
                                 foundInLine = -1
-                                print "\tm: " + match
                         else:
                             count += foundInLine
                             foundInLine = -1
@@ -137,38 +144,14 @@ class Answerer:
                             count = 0
                             foundInLine = 0
                         if found is True:# favors the very first occurence of the topic for a found file
-                            print "\tm: " + match
                             found = False
                             count -= 10
-                # p.search(line)
-                # if m:
-                #     if foundInLine == 1:
-                #         print self.find_str(line, m.group(pattern_positions[i])), self.find_str(line, clue_entity), m.group(pattern_positions[i]), count
-                #         if self.find_str(line, clue_entity) != -1:
-                #             if self.find_str(line, m.group(pattern_positions[i])) > self.find_str(line, clue_entity):
-                #                 foundInLine = 3
-                #                 count += line.count(clue_entity)
-                #                 print "\tm: " + m.group(pattern_positions[i])
-                #         else:
-                #             foundInLine = 3
-                #             count += 1
-                #             print m.group(pattern_positions[i]), count
-                #     matched_groups[count] = m.group(pattern_positions[i])
-                #     if "John" in clue_entity:
-                #         print "added: ", m.group(pattern_positions[i]), count
-                #     if foundInLine == 1:
-                #         count -= 1
-                #         foundInLine = 0
-                #     if found is True:# favors the very first occurence of the topic for a found file
-                #         print "\tm: " + m.group(pattern_positions[i])
-                #         found = False
-                #         count -= 10
-        print matched_groups
         # Return the match corresponding to the first regular expression in the
         # list.
         if len(matched_groups) > 0:
-            print "MY RETURN: " + matched_groups[max(matched_groups.keys())]
-            return matched_groups[max(matched_groups.keys())], max(matched_groups.keys())
+            index = max(matched_groups.keys())
+            returnVal = matched_groups[index]
+            return returnVal, index
         else:
             return None
 
