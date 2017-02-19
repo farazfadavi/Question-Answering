@@ -4,29 +4,85 @@
 # Ported to Python by Milind Ganjoo (mganjoo@stanford.edu)
 
 import itertools as it
+from NaiveBayes import NaiveBayes
+import re
+
+
+entity_finder = '<[^>|L]+>([^<]+)<\/[^>]+>'
+location_finder = '<[^>]+>([^<]+)<\/\w+>, <\w+>([^<]+)<\/[^>]+>'
+capital_finder = '([A-Z]\w+)'
 
 class ClueParser:
     def __init__(self):
-        # TODO: if your implementation requires a trained classifier, you should declare it here.
-        # Remember to import the class at the top of the file (from NaiveBayes import NaiveBayes)
-        # e.g. self.classifier = NaiveBayes()
+        self.classifier = NaiveBayes()
         pass
+
+    def findEntities(self, clue):
+        entities = []
+        matches = re.findall(location_finder, clue)
+        for match in matches:
+            location = match[0] + ", " + match[1]
+            entities.append(location)
+        matches = re.findall(entity_finder, clue)
+        for match in matches:
+            entities.append(match)
+        return entities
+
+    def findCapEntity(self, clue):
+        matches = re.findall(capital_finder, clue)
+        if len(matches) != 0:
+            return " ".join(matches)
+        else:
+            return ""
 
     def parseClues(self, clues):
         """Parse each clue and return a list of parses, one for each clue."""
         parses = []
         for clue in clues:
-            # TODO: modify this to actually parse each clue and represent in relational form.
-            parses.append("wife_of:Gene Autry")
+            klass = self.classifier.classify(self.findFeatures(clue))
+            entities = self.findEntities(clue)
+            parse = klass + ":"
+            if len(entities) != 0:
+                parse += entities[-1]
+            else:
+                parse += self.findCapEntity(clue)
+            parses.append(parse)
         return parses
+
+    def findFeatures(self, clue):
+        words = []
+        start = 0
+        i = 0
+        clue = clue.replace("<PERSON>", "")
+        clue = clue.replace("<LOCATION>", "")
+        clue = clue.replace("<ORGANIZATION>", "")
+        clue = clue.replace("</PERSON>", "")
+        clue = clue.replace("</LOCATION>", "")
+        clue = clue.replace("</ORGANIZATION>", "")
+        while i < len(clue):
+            if clue[i] == "<":
+                print clue
+            if (clue[i] == " " or i == len(clue) - 1) and i != start:
+                word = clue[start:i]
+                if word[0] == " ":
+                    word = word[1:]
+                words.append(word)
+                start = i + 1
+            i += 1
+        return words
 
     def train(self, clues, parsed_clues):
         """Trains the model on clues paired with gold standard parses."""
-        # TODO: If your implementation of ClueParser needs to be trained on labeled
-        # data, put your training code here to replace the "pass" line.
-        pass
-
-    #### You should not need to change anything after this point. ####
+        if len(clues) != len(parsed_clues):
+            print "len(clues) != len(parsed_clues)"
+        klasses = []
+        for answer in parsed_clues:
+            klass = answer[:answer.index(":")]
+            klasses.append(klass)
+        features = []
+        for clue in clues:
+            features.append(self.findFeatures(clue))
+        self.classifier.addExamples(features, klasses)
 
     def evaluate(self, parsed_clues, gold_parsed_clues):
         """Shows how the ClueParser model will score on the training/development data."""
@@ -53,7 +109,7 @@ def loadList(file_name):
 
 def main():
     """Tests the model on the command line. This won't be called in
-        scoring, so if you change anything here it should only be code 
+        scoring, so if you change anything here it should only be code
         that you use in testing the behavior of the model."""
 
     clues_file = "data/part1-clues.txt"
