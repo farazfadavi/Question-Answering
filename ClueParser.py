@@ -11,7 +11,7 @@ import re
 entity_finder = '<[^>|L]+>([^<]+)<\/[^>]+>'
 location_finder = '<[^>]+>([^<]+)<\/\w+>, <\w+>([^<]+)<\/[^>]+>'
 capital_finder = '([A-Z]\w+)'
-
+capital_remover = '([\s\S]*?)(<\/?[A-Z]+>|$)'
 class ClueParser:
     def __init__(self):
         self.classifier = NaiveBayes()
@@ -53,12 +53,17 @@ class ClueParser:
         words = []
         start = 0
         i = 0
-        clue = clue.replace("<PERSON>", "")
-        clue = clue.replace("<LOCATION>", "")
-        clue = clue.replace("<ORGANIZATION>", "")
-        clue = clue.replace("</PERSON>", "")
-        clue = clue.replace("</LOCATION>", "")
-        clue = clue.replace("</ORGANIZATION>", "")
+        # clue = clue.replace("<PERSON>", "")
+        # clue = clue.replace("<LOCATION>", "")
+        # clue = clue.replace("<ORGANIZATION>", "")
+        # clue = clue.replace("</PERSON>", "")
+        # clue = clue.replace("</LOCATION>", "")
+        # clue = clue.replace("</ORGANIZATION>", "")
+        matches = re.findall(capital_remover, clue)
+        sent = []
+        for match in matches:
+            sent.append(match[0])
+        clue = "".join(sent)
         while i < len(clue):
             if clue[i] == "<":
                 print clue
@@ -73,8 +78,6 @@ class ClueParser:
 
     def train(self, clues, parsed_clues):
         """Trains the model on clues paired with gold standard parses."""
-        if len(clues) != len(parsed_clues):
-            print "len(clues) != len(parsed_clues)"
         klasses = []
         for answer in parsed_clues:
             klass = answer[:answer.index(":")]
